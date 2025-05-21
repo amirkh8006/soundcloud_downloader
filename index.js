@@ -76,9 +76,12 @@ bot.on('message', async (msg) => {
     response.data.pipe(writer);
 
     writer.on('finish', async () => {
-      await bot.sendAudio(chatId, filepath, {
+      await bot.sendAudio(chatId, filepath , {
         title: track.title,
         performer: track.user?.username || 'Unknown'
+      }, {
+        filename: filename,
+        contentType: 'audio/mpeg'
       });
 
       fs.unlinkSync(filepath); // Cleanup
