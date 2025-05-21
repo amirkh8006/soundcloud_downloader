@@ -1,3 +1,6 @@
+process.env.NODE_TELEGRAM_BOT_API_SUPPRESS_DEPRECATION_WARNING = 'true';
+
+
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
