@@ -1,6 +1,3 @@
-process.env.NODE_TELEGRAM_BOT_API_SUPPRESS_DEPRECATION_WARNING = 'true';
-
-
 const TelegramBot = require('node-telegram-bot-api');
 const fs = require('fs');
 const path = require('path');
@@ -76,12 +73,9 @@ bot.on('message', async (msg) => {
     response.data.pipe(writer);
 
     writer.on('finish', async () => {
-      await bot.sendAudio(chatId, filepath , {
+      await bot.sendAudio(chatId, filepath, {
         title: track.title,
         performer: track.user?.username || 'Unknown'
-      }, {
-        filename: filename,
-        contentType: 'audio/mpeg'
       });
 
       fs.unlinkSync(filepath); // Cleanup
