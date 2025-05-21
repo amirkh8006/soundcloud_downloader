@@ -19,7 +19,6 @@ async function resolveShortUrlViaApi(shortUrl) {
     }
     return shortUrl;
   } catch (err) {
-    console.error('Error unshortening URL:', err.message);
     return shortUrl;
   }
 }
@@ -41,7 +40,6 @@ bot.on('message', async (msg) => {
     // 🧭 Handle short URLs
     if (/on\.soundcloud\.com/.test(url)) {      
       url = await resolveShortUrlViaApi(url);
-      console.log('🔗 Resolved short URL to:', url);
     }
 
 
@@ -85,11 +83,9 @@ bot.on('message', async (msg) => {
 
     writer.on('error', err => {
       bot.sendMessage(chatId, '❌ Error saving file.');
-      console.error(err);
     });
 
   } catch (err) {
-    console.error(err);
     bot.sendMessage(chatId, '❌ Failed to process the link. Make sure it\'s a valid SoundCloud track.');
   }
 });
