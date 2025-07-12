@@ -104,41 +104,23 @@ async function getLyricsFromGenius(artist, title) {
     const searchUrl = `https://api.genius.com/search?q=${encodeURIComponent(query)}`;
     const searchRes = await axios.get(searchUrl, {
       headers: { Authorization: `Bearer ${GENIUS_TOKEN}` }
-    });
-
-    console.log("Artist" , artist);
-    console.log("TITLE" , title);    
-    
+    });  
 
     const hit = searchRes.data.response.hits.find(h => h.result.primary_artist.name.toLowerCase().includes(artist.toLowerCase()));
     if (!hit) return null;
 
-    console.log("HIT" , hit);
-    
-
     const lyricsPageUrl = hit.result.url;
-    console.log("URL LYRIC" , lyricsPageUrl);
     
     const lyricsHtml = await axios.get(lyricsPageUrl);
-    const match = lyricsHtml.data.match(/<div class="lyrics">([\s\S]*?)<\/div>/) || lyricsHtml.data.match(/<div data-lyrics-container="true">([\s\S]*?)<\/div>/);
-
-    if (!match) return null;
-
-    console.log("MATCH" , match);
+    const $ = cheerio.load(lyricsHtml.data);
     
-
-    const lyrics = match[1]
-      .replace(/<br\s*\/?>/g, '\n')
-      .replace(/<[^>]+>/g, '')
-      .trim();
-
-
-    console.log("LYRICS" , lyrics);
+    let lyrics = '';
+    $('[data-lyrics-container="true"]').each((i, el) => {
+      lyrics += $(el).text().trim() + '\n';
+    });
       
     return lyrics;
-  } catch (err) {
-    console.log("Error" , err);
-    
+  } catch (err) {    
     return null;
   }
 }
