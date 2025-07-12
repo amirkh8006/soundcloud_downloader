@@ -96,7 +96,7 @@ bot.on('message', async (msg) => {
 });
 
 
-const GENIUS_TOKEN = 'kVrQAig7SIHOqGPbbkoVa3ejvIw_f6-5YgclZANmUoz3Ha7y_zHExuMpdXR3_uB2nOsK3ScA1mnaNOSRrER9TA';
+const GENIUS_TOKEN = '5sCbGlc5-NTwqH5OvdxMOz84-nTDMzGlsNyjsFc7K3UP-McHWeJvJUa8hI6ysp29';
 
 async function getLyricsFromGenius(artist, title) {
   try {
