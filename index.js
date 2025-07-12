@@ -77,6 +77,12 @@ bot.on('message', async (msg) => {
         performer: track.user?.username || 'Unknown'
       });
 
+      const lyrics = await getLyrics(track.user?.username || '', track.title);
+      if (lyrics) {
+        await bot.sendMessage(chatId, `📃 *Lyrics:*\n\n${lyrics}`, { parse_mode: 'Markdown' });
+      } else {
+        await bot.sendMessage(chatId, '❌ Lyrics not found.');
+      }
       fs.unlinkSync(filepath); // Cleanup
     });
 
@@ -88,3 +94,13 @@ bot.on('message', async (msg) => {
     bot.sendMessage(chatId, '❌ Failed to process the link. Make sure it\'s a valid SoundCloud track.');
   }
 });
+
+
+async function getLyrics(artist, title) {
+  try {
+    const res = await axios.get(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
+    return res.data.lyrics;
+  } catch (err) {
+    return null;
+  }
+}
