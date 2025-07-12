@@ -97,6 +97,9 @@ bot.on('message', async (msg) => {
 
 
 async function getLyrics(artist, title) {
+  console.log("Artis" , artist);
+  console.log("Track" , track);
+  
   try {
     const res = await axios.get(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
     return res.data.lyrics;
