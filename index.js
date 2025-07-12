@@ -107,10 +107,7 @@ async function getLyricsFromGenius(artist, title) {
     });
 
     console.log("Artist" , artist);
-    console.log("TITLE" , title);
-
-    console.log("HITSS" , searchRes.data.response.hits);
-    
+    console.log("TITLE" , title);    
     
 
     const hit = searchRes.data.response.hits.find(h => h.result.primary_artist.name.toLowerCase().includes(artist.toLowerCase()));
@@ -120,16 +117,24 @@ async function getLyricsFromGenius(artist, title) {
     
 
     const lyricsPageUrl = hit.result.url;
+    console.log("URL LYRIC" , lyricsPageUrl);
+    
     const lyricsHtml = await axios.get(lyricsPageUrl);
     const match = lyricsHtml.data.match(/<div class="lyrics">([\s\S]*?)<\/div>/) || lyricsHtml.data.match(/<div data-lyrics-container="true">([\s\S]*?)<\/div>/);
 
     if (!match) return null;
+
+    console.log("MATCH" , match);
+    
 
     const lyrics = match[1]
       .replace(/<br\s*\/?>/g, '\n')
       .replace(/<[^>]+>/g, '')
       .trim();
 
+
+    console.log("LYRICS" , lyrics);
+      
     return lyrics;
   } catch (err) {
     console.log("Error" , err);
