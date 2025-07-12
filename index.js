@@ -106,8 +106,18 @@ async function getLyricsFromGenius(artist, title) {
       headers: { Authorization: `Bearer ${GENIUS_TOKEN}` }
     });
 
+    console.log("Artist" , artist);
+    console.log("TITLE" , title);
+
+    console.log("HITSS" , searchRes.data.response.hits);
+    
+    
+
     const hit = searchRes.data.response.hits.find(h => h.result.primary_artist.name.toLowerCase().includes(artist.toLowerCase()));
     if (!hit) return null;
+
+    console.log("HIT" , hit);
+    
 
     const lyricsPageUrl = hit.result.url;
     const lyricsHtml = await axios.get(lyricsPageUrl);
@@ -122,6 +132,8 @@ async function getLyricsFromGenius(artist, title) {
 
     return lyrics;
   } catch (err) {
+    console.log("Error" , err);
+    
     return null;
   }
 }
