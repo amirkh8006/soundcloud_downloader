@@ -9,6 +9,7 @@ const TELEGRAM_BOT_TOKEN = '7833659006:AAG4iprF1lShqGJ5bxR3IZJer2nCaLXQCrE';
 const SOUNDCLOUD_CLIENT_ID = 'yNSW5UvBmb1A5j7qPUtIMuB9Itx3jsOC';
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
+const lyricsCache = new Map(); // GeniusID => URL
 
 
 async function resolveShortUrlViaApi(shortUrl) {
@@ -88,11 +89,13 @@ bot.on('message', async (msg) => {
         return bot.sendMessage(chatId, '❌ No lyrics found.');
       }
 
+      results.forEach(r => lyricsCache.set(r.id.toString(), r.url)); // store URL with ID
+
       const keyboard = {
         inline_keyboard: results.map(r => [
           {
             text: r.title,
-            callback_data: `lyrics|${r.url}`
+            callback_data: `lyrics|${r.id}`
           }
         ])
       };
@@ -117,7 +120,14 @@ bot.on('callback_query', async (callbackQuery) => {
   const data = callbackQuery.data;
 
   if (data.startsWith('lyrics|')) {
-    const url = data.split('|')[1];
+    const geniusId = data.split('|')[1];
+    const url = lyricsCache.get(geniusId);
+
+    if (!url) {
+      await bot.sendMessage(msg.chat.id, '❌ Could not find the lyrics URL.');
+      return bot.answerCallbackQuery(callbackQuery.id);
+    }
+
     bot.answerCallbackQuery(callbackQuery.id);
 
     const lyrics = await scrapeLyricsFromGeniusUrl(url);
