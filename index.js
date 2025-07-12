@@ -77,8 +77,8 @@ bot.on('message', async (msg) => {
         performer: track.user?.username || 'Unknown'
       });
 
-      const lyrics = await getLyrics(track.user?.username || '', track.title);
-      if (lyrics) {
+        const cleanTrackTitle = cleanTitle(track.title);
+        const lyrics = await getLyricsFromGenius(track.user?.username || '', cleanTrackTitle);      if (lyrics) {
         await bot.sendMessage(chatId, `📃 *Lyrics:*\n\n${lyrics}`, { parse_mode: 'Markdown' });
       } else {
         await bot.sendMessage(chatId, '❌ Lyrics not found.');
@@ -96,14 +96,37 @@ bot.on('message', async (msg) => {
 });
 
 
-async function getLyrics(artist, title) {
-  console.log("Artis" , artist);
-  console.log("Track" , title);
-  
+const GENIUS_TOKEN = 'kVrQAig7SIHOqGPbbkoVa3ejvIw_f6-5YgclZANmUoz3Ha7y_zHExuMpdXR3_uB2nOsK3ScA1mnaNOSRrER9TA';
+
+async function getLyricsFromGenius(artist, title) {
   try {
-    const res = await axios.get(`https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`);
-    return res.data.lyrics;
+    const query = `${artist} ${title}`;
+    const searchUrl = `https://api.genius.com/search?q=${encodeURIComponent(query)}`;
+    const searchRes = await axios.get(searchUrl, {
+      headers: { Authorization: `Bearer ${GENIUS_TOKEN}` }
+    });
+
+    const hit = searchRes.data.response.hits.find(h => h.result.primary_artist.name.toLowerCase().includes(artist.toLowerCase()));
+    if (!hit) return null;
+
+    const lyricsPageUrl = hit.result.url;
+    const lyricsHtml = await axios.get(lyricsPageUrl);
+    const match = lyricsHtml.data.match(/<div class="lyrics">([\s\S]*?)<\/div>/) || lyricsHtml.data.match(/<div data-lyrics-container="true">([\s\S]*?)<\/div>/);
+
+    if (!match) return null;
+
+    const lyrics = match[1]
+      .replace(/<br\s*\/?>/g, '\n')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+
+    return lyrics;
   } catch (err) {
     return null;
   }
+}
+
+
+function cleanTitle(title) {
+  return title.replace(/\(.*?\)|\[.*?\]|[^a-zA-Z0-9\s]/g, '').trim();
 }
