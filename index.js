@@ -82,27 +82,13 @@ bot.on('message', async (msg) => {
 
       fs.unlinkSync(filepath); // Cleanup
 
-      const query = `${track.user?.username || ''} ${track.title}`;
-      const results = await searchLyricsOptionsGenius(query);
-
-      if (results.length === 0) {
-        return bot.sendMessage(chatId, '❌ No lyrics found.');
+      const cleanTrackTitle = cleanTitle(track.title);
+      const lyrics = await getLyricsFromGenius(track.user?.username || '', cleanTrackTitle);
+      if (lyrics) {
+        await sendLargeMessage(chatId, `📃 *Lyrics for ${cleanTrackTitle}:*\n\n${lyrics}`, { parse_mode: 'Markdown' });
+      } else {
+        await bot.sendMessage(chatId, '❌ Lyrics not found.');
       }
-
-      results.forEach(r => lyricsCache.set(r.id.toString(), r.url)); // store URL with ID
-
-      const keyboard = {
-        inline_keyboard: results.map(r => [
-          {
-            text: r.title,
-            callback_data: `lyrics|${r.id}`
-          }
-        ])
-      };
-
-      await bot.sendMessage(chatId, '🎼 Choose a lyrics version:', {
-        reply_markup: keyboard
-      });
     });
 
 
@@ -115,58 +101,35 @@ bot.on('message', async (msg) => {
   }
 });
 
-bot.on('callback_query', async (callbackQuery) => {
-  const msg = callbackQuery.message;
-  const data = callbackQuery.data;
-
-  if (data.startsWith('lyrics|')) {
-    const geniusId = data.split('|')[1];
-    const url = lyricsCache.get(geniusId);
-
-    if (!url) {
-      await bot.sendMessage(msg.chat.id, '❌ Could not find the lyrics URL.');
-      return bot.answerCallbackQuery(callbackQuery.id);
-    }
-
-    bot.answerCallbackQuery(callbackQuery.id);
-
-    const lyrics = await scrapeLyricsFromGeniusUrl(url);
-    if (lyrics) {
-      await sendLargeMessage(msg.chat.id, `📃 Lyrics:\n\n${lyrics}`, { parse_mode: 'Markdown' });
-    } else {
-      await bot.sendMessage(msg.chat.id, '❌ Failed to fetch lyrics.');
-    }
-  }
-});
-
 
 
 const GENIUS_TOKEN = '5sCbGlc5-NTwqH5OvdxMOz84-nTDMzGlsNyjsFc7K3UP-McHWeJvJUa8hI6ysp29';
 
-async function searchLyricsOptionsGenius(query) {
+
+async function sendLargeMessage(chatId, text, options = {}) {
+  const limit = 4096;
+  for (let i = 0; i < text.length; i += limit) {
+    const chunk = text.substring(i, i + limit);
+    await bot.sendMessage(chatId, chunk, options);
+  }
+}
+
+async function getLyricsFromGenius(artist, title) {
   try {
+    const query = `${artist} ${title}`;
     const searchUrl = `https://api.genius.com/search?q=${encodeURIComponent(query)}`;
     const searchRes = await axios.get(searchUrl, {
       headers: { Authorization: `Bearer ${GENIUS_TOKEN}` }
     });
 
-    const hits = searchRes.data.response.hits;
+    const hit = searchRes.data.response.hits.find(h =>
+      h.result.primary_artist.name.toLowerCase().includes(artist.toLowerCase())
+    );
+    if (!hit) return null;
 
-    return hits.slice(0, 5).map(hit => ({
-      id: hit.result.id,
-      title: hit.result.full_title,
-      url: hit.result.url
-    }));
-  } catch (err) {
-    return [];
-  }
-}
-
-
-async function scrapeLyricsFromGeniusUrl(url) {
-  try {
-    const htmlRes = await axios.get(url);
-    const $ = cheerio.load(htmlRes.data);
+    const lyricsPageUrl = hit.result.url;
+    const lyricsHtml = await axios.get(lyricsPageUrl);
+    const $ = cheerio.load(lyricsHtml.data);
 
     let lyrics = '';
     $('[data-lyrics-container="true"]').each((i, el) => {
@@ -176,14 +139,6 @@ async function scrapeLyricsFromGeniusUrl(url) {
     return lyrics.trim() || null;
   } catch (err) {
     return null;
-  }
-}
-
-async function sendLargeMessage(chatId, text, options = {}) {
-  const limit = 4096;
-  for (let i = 0; i < text.length; i += limit) {
-    const chunk = text.substring(i, i + limit);
-    await bot.sendMessage(chatId, chunk, options);
   }
 }
 
