@@ -132,7 +132,7 @@ bot.on('callback_query', async (callbackQuery) => {
 
     const lyrics = await scrapeLyricsFromGeniusUrl(url);
     if (lyrics) {
-      await bot.sendMessage(msg.chat.id, `📃 *Lyrics:*\n\n${lyrics}`, { parse_mode: 'Markdown' });
+      await sendLargeMessage(msg.chat.id, `📃 Lyrics:\n\n${lyrics}`, { parse_mode: 'Markdown' });
     } else {
       await bot.sendMessage(msg.chat.id, '❌ Failed to fetch lyrics.');
     }
@@ -179,7 +179,13 @@ async function scrapeLyricsFromGeniusUrl(url) {
   }
 }
 
-
+async function sendLargeMessage(chatId, text, options = {}) {
+  const limit = 4096;
+  for (let i = 0; i < text.length; i += limit) {
+    const chunk = text.substring(i, i + limit);
+    await bot.sendMessage(chatId, chunk, options);
+  }
+}
 
 function cleanTitle(title) {
   return title.replace(/\(.*?\)|\[.*?\]|[^a-zA-Z0-9\s]/g, '').trim();
