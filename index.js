@@ -55,6 +55,9 @@ bot.on('message', async (msg) => {
         // Disable cache to force fresh parse, sometimes helps
         cache: false
       });
+
+      console.log("AAAA" , info);
+      
       const title = info.videoDetails.title.replace(/[^\w\d]/g, '_');
       const filepath = path.join(__dirname, `${title}.mp3`);
 
