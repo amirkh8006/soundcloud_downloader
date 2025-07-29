@@ -8,8 +8,6 @@ const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 ffmpeg.setFfmpegPath(ffmpegPath);
-const youtubedl = require('youtube-dl-exec');
-
 
 
 const TELEGRAM_BOT_TOKEN = '7833659006:AAG4iprF1lShqGJ5bxR3IZJer2nCaLXQCrE';
@@ -48,13 +46,16 @@ bot.on('message', async (msg) => {
 
     try {
       // const info = await ytdl.getInfo(ytUrl);
-
-      const info = await youtubedl(ytUrl, {
-        dumpSingleJson: true,
-        noWarnings: true,
-        noCheckCertificate: true,
-        preferFreeFormats: true,
-        youtubeSkipDashManifest: true,
+      const info = await ytdl.getInfo(ytUrl, { 
+        // Using `requestOptions` with custom headers can help too
+        requestOptions: {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+          }
+        },
+        // Fallback to basic player parsing
+        // @ts-ignore (if TS complains)
+        player_url: 'https://www.youtube.com/s/player/1d70745a/player_ias.vflset/en_US/base.js'
       });
       const title = info.videoDetails.title.replace(/[^\w\d]/g, '_');
       const filepath = path.join(__dirname, `${title}.mp3`);
