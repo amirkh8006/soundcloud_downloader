@@ -38,6 +38,10 @@ bot.on('message', async (msg) => {
   const youtubeMatch = text.match(/https?:\/\/(www\.|music\.)?(youtube\.com|youtu\.be)\/\S+/i);
   if (youtubeMatch) {
     const ytUrl = youtubeMatch[0].trim();
+
+    if (ytUrl.includes('music.youtube.com')) {
+      ytUrl = ytUrl.replace('music.youtube.com', 'www.youtube.com');
+    }
     bot.sendMessage(chatId, '📽️ Processing your YouTube link...');
 
     try {
