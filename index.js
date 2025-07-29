@@ -46,16 +46,14 @@ bot.on('message', async (msg) => {
 
     try {
       // const info = await ytdl.getInfo(ytUrl);
-      const info = await ytdl.getInfo(ytUrl, { 
-        // Using `requestOptions` with custom headers can help too
+      const info = await ytdl.getInfo(ytUrl, {
         requestOptions: {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
           }
         },
-        // Fallback to basic player parsing
-        // @ts-ignore (if TS complains)
-        player_url: 'https://www.youtube.com/s/player/1d70745a/player_ias.vflset/en_US/base.js'
+        // Disable cache to force fresh parse, sometimes helps
+        cache: false
       });
       const title = info.videoDetails.title.replace(/[^\w\d]/g, '_');
       const filepath = path.join(__dirname, `${title}.mp3`);
