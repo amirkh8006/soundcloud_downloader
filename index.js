@@ -30,6 +30,32 @@ async function resolveShortUrlViaApi(shortUrl) {
   }
 }
 
+async function getYouTubeMp3Url(youtubeUrl) {
+  // Example for yt-download.org API (free, no key needed)
+  // API endpoint: https://yt-download.org/api/button/mp3/{VIDEO_ID}
+  
+  const videoId = extractYouTubeVideoID(youtubeUrl);
+  if (!videoId) throw new Error('Invalid YouTube URL');
+
+  const apiUrl = `https://yt-download.org/api/button/mp3/${videoId}`;
+  const response = await axios.get(apiUrl);
+  // response.data has mp3 info and download URLs
+
+  // Extract first mp3 download link
+  if (response.data && response.data.links && response.data.links.mp3) {
+    // Links array usually sorted by quality
+    return response.data.links.mp3[0].url;
+  }
+  throw new Error('MP3 URL not found');
+}
+
+function extractYouTubeVideoID(url) {
+  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}
+
+
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
@@ -42,47 +68,20 @@ bot.on('message', async (msg) => {
     if (ytUrl.includes('music.youtube.com')) {
       ytUrl = ytUrl.replace('music.youtube.com', 'www.youtube.com');
     }
-    bot.sendMessage(chatId, '📽️ Processing your YouTube link...');
+    bot.sendMessage(chatId, '📽️ Processing your YouTube link....');
 
     try {
-      // const info = await ytdl.getInfo(ytUrl);
-      const info = await ytdl.getInfo(ytUrl, {
-        requestOptions: {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-          }
-        },
-        // Disable cache to force fresh parse, sometimes helps
-        cache: false
+      await bot.sendMessage(chatId, '🎧 Processing your YouTube track...');
+      const mp3Url = await getYouTubeMp3Url(ytUrl);
+
+      // Send audio as Telegram can fetch it via URL
+      await bot.sendAudio(chatId, mp3Url, {
+        title: 'YouTube Track',
+        performer: 'Unknown',
       });
-
-      console.log("AAAA" , info);
-      
-      const title = info.videoDetails.title.replace(/[^\w\d]/g, '_');
-      const filepath = path.join(__dirname, `${title}.mp3`);
-
-      // Extract audio (MP3)
-      const audioStream = ytdl(ytUrl, { quality: 'highestaudio' });
-
-      ffmpeg(audioStream)
-        .audioBitrate(128)
-        .save(filepath)
-        .on('end', async () => {
-          await bot.sendAudio(chatId, filepath, {
-            title: info.videoDetails.title,
-            performer: info.videoDetails.author.name
-          });
-
-          fs.unlinkSync(filepath); // Cleanup
-        })
-        .on('error', err => {
-          console.error(err);
-          bot.sendMessage(chatId, '❌ Failed to download or convert the video.');
-        });
-
     } catch (err) {
       console.error(err);
-      bot.sendMessage(chatId, '❌ Failed to process YouTube link.');
+      await bot.sendMessage(chatId, '❌ Failed to download MP3 from YouTube.');
     }
 
     return; // Prevent further processing
