@@ -4,6 +4,11 @@ const path = require('path');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+const ytdl = require('ytdl-core');
+const ffmpeg = require('fluent-ffmpeg');
+const ffmpegPath = require('ffmpeg-static');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
 
 const TELEGRAM_BOT_TOKEN = '7833659006:AAG4iprF1lShqGJ5bxR3IZJer2nCaLXQCrE';
 const SOUNDCLOUD_CLIENT_ID = 'yNSW5UvBmb1A5j7qPUtIMuB9Itx3jsOC';
@@ -29,6 +34,43 @@ async function resolveShortUrlViaApi(shortUrl) {
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text || '';
+
+  const youtubeMatch = text.match(/https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/\S+/i);
+  if (youtubeMatch) {
+    const ytUrl = youtubeMatch[0].trim();
+    bot.sendMessage(chatId, '📽️ Processing your YouTube link...');
+
+    try {
+      const info = await ytdl.getInfo(ytUrl);
+      const title = info.videoDetails.title.replace(/[^\w\d]/g, '_');
+      const filepath = path.join(__dirname, `${title}.mp3`);
+
+      // Extract audio (MP3)
+      const audioStream = ytdl(ytUrl, { quality: 'highestaudio' });
+
+      ffmpeg(audioStream)
+        .audioBitrate(128)
+        .save(filepath)
+        .on('end', async () => {
+          await bot.sendAudio(chatId, filepath, {
+            title: info.videoDetails.title,
+            performer: info.videoDetails.author.name
+          });
+
+          fs.unlinkSync(filepath); // Cleanup
+        })
+        .on('error', err => {
+          console.error(err);
+          bot.sendMessage(chatId, '❌ Failed to download or convert the video.');
+        });
+
+    } catch (err) {
+      console.error(err);
+      bot.sendMessage(chatId, '❌ Failed to process YouTube link.');
+    }
+
+    return; // Prevent further processing
+  }
 
   const match = text.match(/https?:\/\/(soundcloud\.com|on\.soundcloud\.com)\/\S+/i);
   if (!match) {
