@@ -35,7 +35,7 @@ bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text || '';
 
-  const youtubeMatch = text.match(/https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/\S+/i);
+  const youtubeMatch = text.match(/https?:\/\/(www\.|music\.)?(youtube\.com|youtu\.be)\/\S+/i);
   if (youtubeMatch) {
     const ytUrl = youtubeMatch[0].trim();
     bot.sendMessage(chatId, '📽️ Processing your YouTube link...');
