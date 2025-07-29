@@ -19,6 +19,7 @@
     "https-proxy-agent": "^7.0.6",
     "node-fetch": "^3.3.2",
     "node-telegram-bot-api": "^0.66.0",
+    "youtube-dl-exec": "^3.0.22",
     "ytdl-core": "^4.11.5"
   }
 }

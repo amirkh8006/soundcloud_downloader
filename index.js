@@ -8,6 +8,8 @@ const ytdl = require('ytdl-core');
 const ffmpeg = require('fluent-ffmpeg');
 const ffmpegPath = require('ffmpeg-static');
 ffmpeg.setFfmpegPath(ffmpegPath);
+const youtubedl = require('youtube-dl-exec');
+
 
 
 const TELEGRAM_BOT_TOKEN = '7833659006:AAG4iprF1lShqGJ5bxR3IZJer2nCaLXQCrE';
@@ -45,7 +47,15 @@ bot.on('message', async (msg) => {
     bot.sendMessage(chatId, '📽️ Processing your YouTube link...');
 
     try {
-      const info = await ytdl.getInfo(ytUrl);
+      // const info = await ytdl.getInfo(ytUrl);
+
+      const info = await youtubedl(ytUrl, {
+        dumpSingleJson: true,
+        noWarnings: true,
+        noCheckCertificate: true,
+        preferFreeFormats: true,
+        youtubeSkipDashManifest: true,
+      });
       const title = info.videoDetails.title.replace(/[^\w\d]/g, '_');
       const filepath = path.join(__dirname, `${title}.mp3`);
 
