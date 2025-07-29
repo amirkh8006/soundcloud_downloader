@@ -4,11 +4,6 @@ const path = require('path');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-const ytdl = require('ytdl-core');
-const ffmpeg = require('fluent-ffmpeg');
-const ffmpegPath = require('ffmpeg-static');
-ffmpeg.setFfmpegPath(ffmpegPath);
-
 
 const TELEGRAM_BOT_TOKEN = '7833659006:AAG4iprF1lShqGJ5bxR3IZJer2nCaLXQCrE';
 const SOUNDCLOUD_CLIENT_ID = 'yNSW5UvBmb1A5j7qPUtIMuB9Itx3jsOC';
@@ -30,62 +25,11 @@ async function resolveShortUrlViaApi(shortUrl) {
   }
 }
 
-async function getYouTubeMp3Url(youtubeUrl) {
-  // Example for yt-download.org API (free, no key needed)
-  // API endpoint: https://yt-download.org/api/button/mp3/{VIDEO_ID}
-  
-  const videoId = extractYouTubeVideoID(youtubeUrl);
-  if (!videoId) throw new Error('Invalid YouTube URL');
-
-  const apiUrl = `https://yt-download.org/api/button/mp3/${videoId}`;
-  const response = await axios.get(apiUrl);
-  // response.data has mp3 info and download URLs
-
-  // Extract first mp3 download link
-  if (response.data && response.data.links && response.data.links.mp3) {
-    // Links array usually sorted by quality
-    return response.data.links.mp3[0].url;
-  }
-  throw new Error('MP3 URL not found');
-}
-
-function extractYouTubeVideoID(url) {
-  const regex = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([\w-]+)/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
-}
-
 
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text || '';
-
-  const youtubeMatch = text.match(/https?:\/\/(www\.|music\.)?(youtube\.com|youtu\.be)\/\S+/i);
-  if (youtubeMatch) {
-    let ytUrl = youtubeMatch[0].trim();
-
-    if (ytUrl.includes('music.youtube.com')) {
-      ytUrl = ytUrl.replace('music.youtube.com', 'www.youtube.com');
-    }
-    bot.sendMessage(chatId, '📽️ Processing your YouTube link....');
-
-    try {
-      await bot.sendMessage(chatId, '🎧 Processing your YouTube track...');
-      const mp3Url = await getYouTubeMp3Url(ytUrl);
-
-      // Send audio as Telegram can fetch it via URL
-      await bot.sendAudio(chatId, mp3Url, {
-        title: 'YouTube Track',
-        performer: 'Unknown',
-      });
-    } catch (err) {
-      console.error(err);
-      await bot.sendMessage(chatId, '❌ Failed to download MP3 from YouTube.');
-    }
-
-    return; // Prevent further processing
-  }
 
   const match = text.match(/https?:\/\/(soundcloud\.com|on\.soundcloud\.com)\/\S+/i);
   if (!match) {
