@@ -78,7 +78,8 @@ bot.on('message', async (msg) => {
     writer.on('finish', async () => {
       await bot.sendAudio(chatId, filepath, {
         title: track.title,
-        performer: track.user?.username || 'Unknown'
+        performer: track.user?.username || 'Unknown',
+        contentType: 'audio/mpeg',
       });
 
       fs.unlinkSync(filepath); // Cleanup
