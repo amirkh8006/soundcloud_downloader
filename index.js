@@ -5,8 +5,6 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 const { exec } = require("child_process");
 
-console.log("AAA" , process.env);
-
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
 const SOUNDCLOUD_CLIENT_ID = process.env.SOUNDCLOUD_CLIENT_ID;
