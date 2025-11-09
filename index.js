@@ -1,9 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const path = require("path");
-const axios = require("axios");
-const cheerio = require("cheerio");
 const { exec } = require("child_process");
+const https = require("https");
 
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN
@@ -11,7 +10,6 @@ const SOUNDCLOUD_CLIENT_ID = process.env.SOUNDCLOUD_CLIENT_ID;
 
 const bot = new TelegramBot(TELEGRAM_BOT_TOKEN, { polling: true });
 
-const https = require("https");
 function resolveShortUrlViaApi(shortUrl) {
   return new Promise((resolve, reject) => {
     const apiUrl = `https://api.redirect.li/v2/http/?url=${encodeURIComponent(
